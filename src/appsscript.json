@@ -1,0 +1,13 @@
+{
+  "dataStudio": {
+    "name": "Airtable Data",
+    "logoUrl": "https://i.imgur.com/y6ZoCXg.png",
+    "company": "Airtable Labs",
+    "companyUrl": "https://www.airtable.com",
+    "addonUrl": "https://github.com/google/datastudio/tree/master/community-connectors/npm-downloads",
+    "supportUrl": "https://github.com/google/datastudio/issues",
+    "description": "Connect your Airtable data to Google Data Studio!",
+    "sources": ["npm"],
+    "authType": ["NONE"]
+  }
+}
