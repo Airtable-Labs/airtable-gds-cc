@@ -1,18 +1,8 @@
-# Airtable -> Google Data Studio Community Connector
+# Airtable -> Google Data Studio Connector
 
-This [Google Data Studio Community Connector](https://developers.google.com/datastudio/connector) (GDS) uses the Airtable Metadata\* and Base APIs to fetch a base's list of tables and fields (schema) as well as all records and make them available to Google Data Studio for visualization.
+This [Google Data Studio Connector](https://developers.google.com/datastudio/connector) uses the Airtable Metadata\* and Base APIs to fetch a base's list of tables and fields (schema) as well as all records and make them available to Google Data Studio for visualization.
 
-📚 **Looking to learn how to use this Google Data Studio Community Connector with an Airtable base?** [Visit the support article with step-by-step instructions and screenshots](https://support.airtable.com/hc/en-us). The rest of this README is geared toward a technical audience.
-
----
-
-Learn about how to use a GDS Community Connector [here](Google Apps Script). The URL for this GDS Community Connector, hosted as a Google Apps Script, is:
-
-```
-https://datastudio.google.com/datasources/create?connectorId=AKfycbwYflZKMjaBAIYXJ9vjOcIVFVktE23ccsP_luAXAjKraQTVTque5umjBHnFPLvhvCJg
-```
-
-- Note that the Metadata API is currently available to Airtable Enterprise customers. Customers on other plans can request Metadata API access [here](https://airtable.com/shrWl6yu8cI8C5Dh3). The Connector will work without the metadata API, but will not be able to infer data types.
+\* Note that the Metadata API is currently available to Airtable Enterprise customers. The Connector will work without the Metadata API, but will not be able to infer data types.
 
 ---
 
@@ -20,13 +10,19 @@ The software made available from this repository is not supported by Formagrid I
 
 ---
 
-### For local development and testing:
+## Step-by-step guide
 
-1. Clone this repository
-2. Install _Node_ dependencies (different from the external libraries loaded from `index.html`) by running `npm install`
-3. Create a [Google Apps Script](https://script.google.com) and copy the script ID
-4. Run npx @google/dscc-gen connector --script_id YOUR_SCRIPT_ID to connect your local environment to your Google Apps Script
+To get started, you’ll need:
+- A Google Data Studio account
+- A target base in an Enterprise workspace
+- Your Airtable API key
 
-### Hosting this Google Data Studio Community Connector
+You'll need to self-host the connector script in your own Google Scripts account. To do this, follow these five steps:
 
-This Community Connector is currently hosted as a Google Apps Script. If you'd like to host this Community Connector yourself, [Google has some recommendations here](https://developers.google.com/datastudio/connector/build).
+1. Create a [Google Apps Script project](https://developers.google.com/datastudio/connector/build#create_a_new_project_in_apps_script)
+2. Paste the code from the `Code.js` and `appsscript.json` files in the `src/` directory of this repository into your new Google Apps Script project
+3. [Test your connector](https://developers.google.com/datastudio/connector/use)
+4. [Create a deployment of your connector](https://developers.google.com/datastudio/connector/deploy)
+5. Optionally, share read access of your connector with anyone that will use the connector. You can use [link sharing](https://support.google.com/docs/answer/2494822#link_sharing) so it doesn't show up in Google Drive)
+
+Now you can retrieve Airtable data from any of your bases—just like you would for any other source in Data Studio. ✨
