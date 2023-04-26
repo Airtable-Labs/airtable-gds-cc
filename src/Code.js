@@ -31,11 +31,6 @@ function getConfig() {
     .setName("Enter a base id");
 
   connectorConfig
-    .newCheckbox()
-    .setId("enterprise_workspace")
-    .setName("Is the base part of an enterprise workspace?");
-
-  connectorConfig
     .newTextInput()
     .setId("table_name")
     .setName("Enter the name of a table");
@@ -50,7 +45,7 @@ function getConfig() {
     .setId("airtable_api_key")
     .setName("Enter your airtable API key");
 
-  return connectorConfig.build();
+    return connectorConfig.build();
 }
 
 function fetchData(url, key) {
@@ -105,8 +100,7 @@ function getFieldType(fieldType) {
     url: types.URL,
   };
 
-  var gdsFieldType = FIELD_TYPES_DICTIONARY[fieldType] || types.TEXT;
-
+  var gdsFieldType = FIELD_TYPES_DICTIONARY[fieldType];
   return gdsFieldType;
 }
 
@@ -115,62 +109,64 @@ function getRecords(request) {
   var viewName = request.configParams.view_name;
   var baseId = request.configParams.base_id;
   var apiKey = request.configParams.airtable_api_key;
+  return airtable_list_all_records(baseId, apiKey, tableName, viewName);
+}
 
+function airtable_list_all_records(baseId, apiKey, tableName, viewName, offset){
+  offset = offset || "";
   var content = fetchData(
     "https://api.airtable.com/v0/" +
       baseId +
       "/" +
       encodeURI(tableName) +
       "?view=" +
-      encodeURI(viewName),
+      encodeURI(viewName) +
+      "&offset=" + offset
+    ,
     apiKey
   );
 
-  var records = JSON.parse(content).records;
-  return records || [];
+  var data = JSON.parse(content);
+  var records = data.records;
+  var newOffset = data.offset;
+
+  if(newOffset === undefined)
+    return records || [];
+  
+  return records.concat(airtable_list_all_records(baseId, apiKey, tableName, viewName, newOffset));
 }
 
 function getFields(request) {
   var ccFields = cc.getFields();
   var tableName = request.configParams.table_name;
   var baseId = request.configParams.base_id;
-  var enterpriseWorkspace = request.configParams.enterprise_workspace;
   var apiKey = request.configParams.airtable_api_key;
   var fields = [];
 
   var content;
-  if (enterpriseWorkspace) {
-    content = fetchData(
-      "https://api.airtable.com/v0/meta/bases/" + baseId + "/tables",
-      apiKey
-    );
+  content = fetchData(
+    "https://api.airtable.com/v0/meta/bases/" + baseId + "/tables",
+    apiKey
+  );
 
-    var tables = JSON.parse(content).tables;
-    // .find isn't working for some reason (google script error?)
-    var matches = tables.filter(function(t) {
-      return t.name == tableName;
-    });
+  var tables = JSON.parse(content).tables;
+  // .find isn't working for some reason (google script error?)
+  var matches = tables.filter(function(t) {
+    return t.name == tableName;
+  });
 
-    fields = matches.length ? matches[0].fields : [];
-  } else {
-    var records = getRecords(request);
-    if (records.length && records[0].fields) {
-      fields = Object.keys(records[0].fields).map(function(field) {
-        return { name: field };
-      });
-    }
-  }
+  fields = matches.length ? matches[0].fields : [];
 
   if (fields.length) {
     fields.forEach(function(f) {
       var fieldType = getFieldType(f.type);
-      var fieldName = f.name;
-      var fieldId = f.name.replace(/[^0-9a-zA-Z]/g, "").toLowerCase();
+      if(!fieldType)
+        return;
       var field = ccFields.newDimension();
 
       field.setType(fieldType);
-      field.setId(fieldId);
-      field.setName(fieldName);
+      field.setId(f.id);
+      field.setName(f.name);
     });
   }
 
@@ -193,26 +189,27 @@ function getData(request) {
   var requestedFields = fields.forIds(requestedFieldIds);
 
   var rows = [];
-  if (records.length && records[0] && records[0].fields) {
-    var fieldMap = Object.keys(records[0].fields).reduce(function(map, curr) {
-      var id = curr.replace(/[^0-9a-zA-Z]/g, "").toLowerCase();
-      map[id] = curr;
-      return map;
-    }, {});
+  var fieldIdToFieldNameMap = fields.asArray().reduce(function(map, f){
+    map[f.getId()] = f.getName();
+    return map;
+  }, {});
 
-    rows = records.map(function(record) {
-      var row = requestedFieldIds.map(function(id) {
-        return record.fields[fieldMap[id]];
-      });
-      return { values: row };
+  rows = records.map(function(record){
+    var row = requestedFieldIds.map(function(id){
+      var result = record.fields[fieldIdToFieldNameMap[id]];
+      return result + ""; 
+      //Force return string, as formula type is defined with field type string, but airtable may return number. Return number would cause error if field type is set to text.
     });
-  }
+    return { values: row };
+  });
+
 
   var result = {
     schema: requestedFields.build(),
     rows: rows,
   };
 
+  //throw JSON.stringify(result);
   return result;
 }
 
